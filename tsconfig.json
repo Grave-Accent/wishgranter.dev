@@ -20,5 +20,9 @@
     "noUncheckedSideEffectImports": true,
     "rewriteRelativeImportExtensions": true,
     "skipLibCheck": true
-  }
+  },
+  "include": [
+    "**/*",
+    "**/.level.ts"
+  ]
 }

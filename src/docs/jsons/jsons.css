@@ -17,6 +17,6 @@ li {
     list-style: none;
 }
 
-li:not(.optional)::before {
+ul li:not(.optional)::before {
     content: "*";
 }
