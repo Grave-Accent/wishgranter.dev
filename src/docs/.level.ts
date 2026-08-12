@@ -23,16 +23,16 @@ async function addFilesToMenu(
     const menu = document.createElement("menu");
 
     for (const path of await readdir(directory_path)) {
-        const is_directory = (
-            await stat(join(directory_path, path))
-        ).isDirectory();
+        const is_directory =
+            (await stat(join(directory_path, path))).isDirectory() &&
+            !path.startsWith(".");
         const is_link =
             (is_directory &&
                 (existsSync(join(directory_path, path, "index.html")) ||
                     existsSync(join(directory_path, path, "index.md")))) ||
-            (!path.startsWith("index") &&
-                !path.startsWith(".level") &&
-                (path.endsWith("html") || path.endsWith("md")));
+            (!path.match(/^(?:\.)|(?:index)/) &&
+                path.match(/\.(?:html)|(?:md)$/));
+
         if (!is_link && !is_directory) continue;
 
         const element = document.createElement("li");
@@ -50,7 +50,14 @@ async function addFilesToMenu(
         label.textContent = clean_path[0]?.toUpperCase() + clean_path.slice(1);
         element.append(label);
 
-        if (is_directory) {
+        if (
+            is_directory &&
+            !(
+                (await readdir(join(directory_path, path))).length == 1 &&
+                (existsSync(join(directory_path, path, "index.html")) ||
+                    existsSync(join(directory_path, path, "index.md")))
+            )
+        ) {
             await addFilesToMenu(document, join(directory_url, path), element);
         }
 

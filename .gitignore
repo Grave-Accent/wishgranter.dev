@@ -6,3 +6,5 @@ public/
 *.js
 *.map
 *.d*
+# Obsidian
+**.obsidian

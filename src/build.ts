@@ -1,9 +1,14 @@
-import { existsSync, statfsSync, statSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path, { join } from "node:path";
 import { JSDOM } from "jsdom";
-import { micromark } from "micromark";
-import { gfm, gfmHtml } from "micromark-extension-gfm";
-import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import remarkGfm from "remark-gfm";
+import remarkHeadingId from "remark-heading-id";
+import remarkRehype from "remark-rehype";
+import rehypeStringify from "rehype-stringify";
+import rehypeRaw from "rehype-raw";
 
 export const out_path = "public";
 export const scripts_path = "dist";
@@ -65,6 +70,7 @@ export function localUrlToFilePath(
 export function localUrlToFilePath(
     url: `${string}/${string}`,
 ): [`${string}/${string}.${string}`, `${string}/${string}.${string}`] {
+    url = url.replace(/#[\w-]*$/, "") as `${string}/${string}`;
     if (url.match(/\.js(?:.map)?$/)) {
         if (existsSync(path.join(scripts_path, url)))
             return [
@@ -77,7 +83,7 @@ export function localUrlToFilePath(
                 path.join(out_path, url) as `${string}/${string}.js`,
             ];
         else throw new ReferenceError(`${url} not found`);
-    } else if (!url.match(/\/[\w-]*((.html)|(.md)|.|)$/)) {
+    } else if (!url.match(/\/[\w-&]*((.html)|(.md)|\.|)$/)) {
         if (existsSync(path.join(working_path, url)))
             return [
                 path.join(working_path, url) as `${string}/${string}.${string}`,
@@ -172,11 +178,16 @@ export async function renderHtml(
 ): Promise<string> {
     let file = await readFile(file_path, "utf8");
     if (file_path.endsWith(".md")) {
-        file = micromark(file, {
-            allowDangerousHtml: true,
-            extensions: [gfm()],
-            htmlExtensions: [gfmHtml()],
-        });
+        file = (
+            await unified()
+                .use(remarkParse)
+                .use(remarkGfm)
+                .use(remarkHeadingId, { defaults: true })
+                .use(remarkRehype, { allowDangerousHtml: true })
+                .use(rehypeRaw)
+                .use(rehypeStringify)
+                .process(file)
+        ).toString();
     }
     const { document } = new JSDOM(file, { runScripts: "dangerously" }).window;
     await addLevelFiles(document, file_path);

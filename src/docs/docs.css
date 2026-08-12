@@ -1,0 +1,21 @@
+img {
+    max-width: 100%;
+}
+
+blockquote {
+    background-color: var(--border-ui-color);
+}
+
+blockquote::before,
+blockquote::after {
+    content: '"';
+}
+
+blockquote p {
+    padding-left: 4px;
+}
+
+code,
+pre {
+    background-color: var(--background-color);
+}
